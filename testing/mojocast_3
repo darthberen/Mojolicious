@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+use Mojolicious::Lite;
+
+plugin 'MyAuth';
+
+get '/login' => sub {
+    shift->render('login');
+};
+
+under sub {
+    my $self = shift;
+    return 1 if $self->auth('bender', 'robot');
+
+    $self->render(text => 'denied');
+    return;
+};
+  
+post '/momcorp'      => sub { shift->render(text => 'Welcome to Momcorp'); };
+post 'momcorp/carol' => sub { shift->render(text => 'What up Carol'); };
+
+app->start;
+
+__DATA__
+
+@@ login.html.ep
+%= t h1 => 'Login'
+%= form_for '/momcorp' => (method => 'post') => begin
+<form method="post" action="/momcorp">
+    Username: <%= text_field 'username' %>
+    Password: <%= text_field 'password' %>
+    %= submit_button 'Log In'
+%= end

@@ -1,0 +1,35 @@
+use Mojolicious::Lite;
+
+# route and action to take
+get '/' => sub {
+    shift->render('hello');
+};
+
+get '/:fname/:lname' => sub {
+    my $self = shift;
+
+    $self->stash(
+        fname => uc $self->param('fname'),
+        lname => uc $self->param('lname')
+    );
+
+    $self->render('capture');
+};
+
+# tells app to initialize
+app->start;
+
+# __DATA__ indicates that the rest of the file is for template markup
+__DATA__
+
+@@ layouts/wrapper.html.ep
+<h1><%= title %></h1>
+<%= content %> To the flying machine!
+
+@@ hello.html.ep
+Holla atcha world!
+
+@@ capture.html.ep
+% title 'Planet Express';
+% layout 'wrapper';
+Holla <%= $fname %> <%= $lname %>. Welcome to the world!
