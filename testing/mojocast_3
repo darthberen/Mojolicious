@@ -7,6 +7,8 @@ get '/login' => sub {
     shift->render('login');
 };
 
+get '/momcorp/carol' => sub { shift->render(text => 'What up Carol'); };
+
 under sub {
     my $self = shift;
     return 1 if $self->auth('bender', 'robot');
