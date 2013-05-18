@@ -1,0 +1,111 @@
+#!/usr/bin/env perl
+use Mojolicious::Lite;
+
+# Documentation browser under "/perldoc"
+# plugin 'PODRenderer';
+
+# custom helper, grabs user-agent and IP
+helper getua => sub {
+    my $self = shift;
+    
+    my $agent = $self->req->headers->user_agent || 'Anonymous';
+    
+    my $ip = $self->tx->remote_address;
+
+    return "$agent ($ip)"
+};
+
+get '/param' => sub {
+    my $self = shift;
+  
+    # grabs the user param (ex. /param?user=matt) and adds to stash
+    # all GET and POST parameters can be grabbed via param 
+    if ($self->param('user')) {
+        $self->stash(user => $self->param('user'));
+    } else {
+        $self->stash(user => 'anon');
+    }
+    
+    # grabs the user agent from the and adds it to the stash
+    #my $ua = $self->req->headers->user_agent;
+    # does the same as above but uses a helper instead
+    $self->stash(ua => $self->getua);
+
+    # $self->render('index');
+} => 'param';
+
+get '/' => sub {} => 'index';
+
+# gruping related routes
+group {
+    under '/admin' => sub {
+        my $self = shift;
+        return 1 if ($self->param('name') eq 'matt');
+        $self->render(text => "You're not an admin");
+        return undef;
+    };
+
+    get '/console' => [format => [qw(json html)]] => sub {
+        my $self = shift;
+        $self->render('console');
+    };
+};
+
+# wildcard (*) placeholder for everything
+# placeholder (:) - captures all but / and .
+# relaxed placeholder (#) - capturs all but .
+#any '/*other' => sub {
+#    my $self = shift;
+
+#    my $path = $self->stash('other');
+
+#    $self->render(text => "You tried to go to $path.  It doesn't really exist so you got this lame placeholder");
+#};
+
+app->start;
+
+__DATA__
+
+@@ console.html.ep
+<!DOCTYPE html>
+<html>
+    <head><title>Console</title></head>
+    <body>
+        Welcome Matt.  You passed the test!
+    </body>
+</html>
+
+@@ console.json.ep
+{"name": "matt", "age": "25"}
+
+@@ index.html.ep
+<!-- / template -->
+% layout 'default';
+% title 'Landing Page';
+Holla atcha world<br />
+Some links dude:<br />
+<%= link_to Param => 'param' %><br />
+<%= link_to Reload => 'index' %>
+
+<!-- /param template -->
+@@ param.html.ep
+% layout 'default';
+% title 'Welcome';
+Welcome <%= $user %> to the Mojolicious real-time web framework!<br />
+Your user agent is <%= $ua %>
+
+<!-- layout -->
+@@ layouts/default.html.ep
+<!-- block for a template -->
+% my $footer = begin
+    % my ($text) = @_;
+    <br />Footer text: <%= $text %>
+% end
+<!DOCTYPE html>
+<html>
+    <head><title><%= title %></title></head>
+    <body>
+        <%= content %><br />
+        %= $footer->('this is some text in a template block')
+    </body>
+</html>
